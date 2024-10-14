@@ -1,0 +1,73 @@
+import cv2
+import pytesseract
+import tkinter as tk
+from tkinter import messagebox
+from tkinter import PhotoImage
+
+def recognize_numbers(image_path):
+    # 读取图像
+    image = cv2.imread(image_path)
+    # 转换为灰度图像
+    gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    # 应用阈值处理
+    _, thresh_image = cv2.threshold(gray_image, 150, 255, cv2.THRESH_BINARY_INV)
+    
+    # 使用 Tesseract 识别图像中的文本
+    recognized_text = pytesseract.image_to_string(thresh_image, config='--psm 6')
+    
+    # 提取数字
+    numbers = [int(s) for s in recognized_text.split() if s.isdigit()]
+    return numbers
+
+def compare_numbers(num1, num2):
+    if num1 < num2:
+        return f"{num1} < {num2}", "less"
+    elif num1 > num2:
+        return f"{num1} > {num2}", "greater"
+    else:
+        return f"{num1} = {num2}", "equal"
+
+def show_result():
+    # 提供包含数字的图像路径
+    image_path = "path_to_your_image.jpg"  # 替换为你的图像路径
+    
+    # 识别图像中的数字
+    numbers = recognize_numbers(image_path)
+    
+    if len(numbers) < 2:
+        messagebox.showerror("错误", "未识别到足够的数字进行比较。")
+        return
+    
+    num1, num2 = numbers[0], numbers[1]
+    result_text, result_type = compare_numbers(num1, num2)
+    
+    # 输出结果
+    result_label.config(text=result_text)
+    if result_type == "less":
+        less_than_symbol.pack()
+        greater_than_symbol.pack_forget()
+    elif result_type == "greater":
+        greater_than_symbol.pack()
+        less_than_symbol.pack_forget()
+    else:
+        less_than_symbol.pack_forget()
+        greater_than_symbol.pack_forget()
+
+# 创建主窗口
+root = tk.Tk()
+root.title("数字比较")
+
+# 创建结果标签
+result_label = tk.Label(root, text="", font=("Arial", 20))
+result_label.pack(pady=20)
+
+# 小于符号
+less_than_symbol = tk.Label(root, text="<", font=("Arial", 50), fg="blue")
+greater_than_symbol = tk.Label(root, text=">", font=("Arial", 50), fg="red")
+
+# 创建按钮以触发识别和比较
+compare_button = tk.Button(root, text="开始比较", command=show_result)
+compare_button.pack(pady=20)
+
+# 启动主循环
+root.mainloop()
